@@ -1,7 +1,22 @@
-#spring:
-#  h2:
-#    console:
-#      enabled: true
+cloud:
+  aws:
+    credentials:
+      access-key: AKIAJH72L3V6GSDJPOEA
+      secret-key: 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
+    region:
+      static: us-east-2
+    stack:
+      auto: false
 
-#server:
-#    port: 9192
+application:
+  bucket:
+    name: updownstorage
+
+
+spring:
+  servlet:
+    multipart:
+      enabled: true
+      file-size-threshold: 2MB
+      max-file-size: 10MB
+      max-request-size: 20MB
