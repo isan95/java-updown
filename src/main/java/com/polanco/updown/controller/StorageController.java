@@ -1,10 +1,13 @@
 package com.polanco.updown.controller;
 
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -17,10 +20,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
 
-import com.amazonaws.services.s3.model.S3ObjectSummary;
+import com.polanco.updown.entity.FileInfo;
 import com.polanco.updown.payload.response.FileResponse;
-import com.polanco.updown.service.StorageService;
+import com.polanco.updown.payload.response.MessageResponse;
+import com.polanco.updown.service.StorageServiceImpl;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
@@ -28,46 +33,69 @@ import com.polanco.updown.service.StorageService;
 public class StorageController {
 
 	@Autowired
-	private StorageService storageService;
+	private StorageServiceImpl storageService;
 	
-	private List<FileResponse> fileResponse = new ArrayList<FileResponse>();
 	
 	@PostMapping("/upload")
-	@PreAuthorize("hasRole('USER') or hasRole('MODERATOR') or hasRole('ADMIN')")
-	public ResponseEntity<String> upload (@RequestParam(value="file")MultipartFile file){
+	@PreAuthorize("hasRole('MODERATOR') or hasRole('ADMIN')")
+	public ResponseEntity<MessageResponse> upload (@RequestParam(value="file")MultipartFile[] files) throws IOException{
+		String message = "";
 		
-		return new ResponseEntity<>(storageService.upload(file), HttpStatus.OK);
+		try {
+			List<String> fileNames = new ArrayList<>();
+			Arrays.asList(files).stream().forEach(file ->{
+				storageService.save(file);
+				fileNames.add(file.getOriginalFilename());
+			});
+			
+			message = "Archivo subido con exito: "+fileNames;
+			return ResponseEntity.status(HttpStatus.OK).body(new MessageResponse(message));
+		}catch(Exception e) {
+			message = "Error al subir el archivo";
+			return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(new MessageResponse(message));
+		}
+		
 	}
 	
 	@GetMapping("/download/{fileName}")
 	@PreAuthorize("hasRole('USER') or hasRole('MODERATOR') or hasRole('ADMIN')")
-	public ResponseEntity<ByteArrayResource> download(@PathVariable String fileName){
+	public ResponseEntity<Resource> download(@PathVariable String fileName){
 		
-		byte[] data = storageService.download(fileName);
-		ByteArrayResource byteArrayResource = new ByteArrayResource(data);
+		Resource data = storageService.load(fileName);
 		System.out.println("Se ha llamado para descargar");
-		return ResponseEntity.ok().contentLength(data.length)
+		return ResponseEntity.ok()
 				.header("Content-type", "application/octet-stream")
 				.header("Content-disposition", "attachment; filename=\""+ fileName+ "\"")
-				.body(byteArrayResource);
+				.body(data);
 	}
 	
+	
 	@DeleteMapping("/delete/{fileName}")
-	@PreAuthorize("hasRole('USER') or hasRole('MODERATOR') or hasRole('ADMIN')")
-	public ResponseEntity<String> delete (@PathVariable String fileName){
-		
-		return new ResponseEntity<>(storageService.delete(fileName), HttpStatus.OK); 
+	@PreAuthorize("hasRole('MODERATOR') or hasRole('ADMIN')")
+	public ResponseEntity<MessageResponse> delete (@PathVariable String fileName){
+		String message = "";
+		try {
+			storageService.delete(fileName);
+			message = "Archivo eliminado con exito";
+			return ResponseEntity.status(HttpStatus.OK).body(new MessageResponse(message));
+		}catch(Exception e) {
+			message = "Error al elimianr el archivo";
+			return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(new MessageResponse(message));
+		}
+		 
 	}
 	
 	@GetMapping("/list")
 	@PreAuthorize("hasRole('USER') or hasRole('MODERATOR') or hasRole('ADMIN')")
-	public ResponseEntity<List<S3ObjectSummary>> fileList(){
-		Object[] fileListResponse = storageService.listUploadedFile().toArray();
-		
-		List<S3ObjectSummary> list = storageService.listUploadedFile();
-		list.forEach(i->{
-			fileResponse.add(new FileResponse(i.getKey(), i.getLastModified()));
-		});
-		return new ResponseEntity<>(storageService.listUploadedFile(), HttpStatus.OK);
+	public ResponseEntity<List<FileInfo>> fileList(){
+		  List<FileInfo> fileInfos = storageService.loadAll().map(path -> {
+		      String filename = path.getFileName().toString();
+		      String url = MvcUriComponentsBuilder
+		          .fromMethodName(StorageController.class, "download", path.getFileName().toString()).build().toString();
+
+		      return new FileInfo(filename, url);
+		    }).collect(Collectors.toList());
+
+		    return ResponseEntity.status(HttpStatus.OK).body(fileInfos);
 	}
 }

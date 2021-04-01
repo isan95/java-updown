@@ -2,17 +2,24 @@ package com.polanco.updown;
 
 import com.polanco.updown.entity.User;
 import com.polanco.updown.repository.UserRepository;
+import com.polanco.updown.service.StorageServiceImpl;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import javax.annotation.PostConstruct;
+import javax.annotation.Resource;
+
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @SpringBootApplication
-public class UpDownApplication {
+public class UpDownApplication implements CommandLineRunner{
+	@Resource
+	StorageServiceImpl storageService;
     /*@Autowired
     private UserRepository repository;
 
@@ -36,6 +43,12 @@ public class UpDownApplication {
 
     public static void main(String[] args) {
         SpringApplication.run(UpDownApplication.class, args);
+    }
+    
+    @Override
+    public void run(String...arg) throws Exception {
+      storageService.deleteAll();
+      storageService.init();
     }
 
 }
