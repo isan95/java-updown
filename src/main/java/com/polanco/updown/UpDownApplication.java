@@ -18,18 +18,20 @@ import java.util.stream.Stream;
 
 @SpringBootApplication
 public class UpDownApplication implements CommandLineRunner{
+	
 	@Resource
 	StorageServiceImpl storageService;
-    /*@Autowired
+	/*
+    @Autowired
     private UserRepository repository;
 
     @PostConstruct
     public void initUsers() {
         List<User> users = Stream.of(
-                new User(101, "ismael", "password" , "ismael@gmail.com"),
-                new User(102, "user1",  "pwd1", "user1@gmail.com"),
-                new User(103, "user2", "pwd2", "user2@gmail.com"),
-                new User(104, "user3",  "pwd3", "user3@gmail.com")
+                new User("ismael", "password" , "ismael@gmail.com"),
+                new User("user1",  "pwd1", "user1@gmail.com"),
+                new User("user2", "pwd2", "user2@gmail.com"),
+                new User("user3",  "pwd3", "user3@gmail.com")
         ).collect(Collectors.toList());
         
 		users.forEach(i->{

@@ -19,7 +19,7 @@ import java.util.Date;
 
 @Component
 public class JwtUtil {
-	
+		
 	private static final Logger logger = LoggerFactory.getLogger(JwtUtil.class);
 
 	@Value("${polanco.app.jwtSecret}")
@@ -31,7 +31,7 @@ public class JwtUtil {
 	public String generateJwtToken(Authentication authentication) {
 
 		UserDetailsImpl userPrincipal = (UserDetailsImpl) authentication.getPrincipal();
-
+		
 		return Jwts.builder()
 				.setSubject((userPrincipal.getUsername()))
 				.setIssuedAt(new Date())
@@ -39,6 +39,7 @@ public class JwtUtil {
 				.signWith(SignatureAlgorithm.HS512, jwtSecret)
 				.compact();
 	}
+	
 
 	public String getUserNameFromJwtToken(String token) {
 		return Jwts.parser().setSigningKey(jwtSecret).parseClaimsJws(token).getBody().getSubject();

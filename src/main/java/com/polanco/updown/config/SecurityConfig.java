@@ -4,6 +4,10 @@ import com.polanco.updown.filter.AuthTokenFilter;
 import com.polanco.updown.security.jwt.AuthEntryPointJwt;
 import com.polanco.updown.service.UserDetailsServiceImpl;
 
+import net.kaczmarzyk.spring.data.jpa.web.SpecificationArgumentResolver;
+
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -17,6 +21,8 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.method.support.HandlerMethodArgumentResolver;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 
 
@@ -27,7 +33,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 		// securedEnabled = true,
 		// jsr250Enabled = true,
 		prePostEnabled = true)
-public class SecurityConfig extends WebSecurityConfigurerAdapter {
+public class SecurityConfig extends WebSecurityConfigurerAdapter implements WebMvcConfigurer{
 
 	@Autowired
 	private UserDetailsServiceImpl userDetailsService;
@@ -56,6 +62,11 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 	public AuthenticationManager authenticationManagerBean() throws Exception {
 		return super.authenticationManagerBean();
 	}
+	
+	 @Override
+	    public void addArgumentResolvers(List<HandlerMethodArgumentResolver> argumentResolvers) {
+	        argumentResolvers.add(new SpecificationArgumentResolver());
+	    }
 
 	@Override
     protected void configure(HttpSecurity http) throws Exception {

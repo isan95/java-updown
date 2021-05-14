@@ -10,6 +10,7 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
+import javax.persistence.NamedQuery;
 import javax.persistence.Table;
 import javax.persistence.OneToMany;
 
@@ -17,6 +18,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+@NamedQuery(name = "FileInfo.findByFilename", 
+query = "SELECT f FROM FileInfo f WHERE LOWER(f.name) = LOWER(?1)")
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
