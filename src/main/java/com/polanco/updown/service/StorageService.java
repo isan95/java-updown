@@ -1,6 +1,7 @@
 package com.polanco.updown.service;
 
 import java.nio.file.Path;
+import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -18,7 +19,7 @@ public interface StorageService {
 	
 	public void init();
 	
-	public void save(MultipartFile file);
+	public void save(MultipartFile file, String expirationDate);
 	
 	public Resource load(String fileName);
 	
@@ -31,5 +32,7 @@ public interface StorageService {
 	public PagingResponse get(Specification<FileInfo> spec, HttpHeaders headers, Sort sort);
 	
 	public FileInfo findByFilename(String filename);
+	
+	public LocalDateTime testDate(String date);
 	
 }

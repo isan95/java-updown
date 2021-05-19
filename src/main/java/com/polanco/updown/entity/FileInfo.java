@@ -1,5 +1,6 @@
 package com.polanco.updown.entity;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 
 import javax.persistence.CascadeType;
@@ -43,5 +44,5 @@ public class FileInfo {
 	@JoinColumn(name="user_id")
 	private User user;
 	
-	private Date experationDate;
+	private LocalDateTime expirationDate;
 }

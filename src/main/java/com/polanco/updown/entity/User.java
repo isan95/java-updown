@@ -23,6 +23,8 @@ import javax.persistence.UniqueConstraint;
 import javax.persistence.JoinColumn;
 import javax.validation.constraints.Email;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 
 @Data
 @AllArgsConstructor
@@ -39,6 +41,8 @@ public class User {
     private Integer id;
 	
     private String username;
+    
+    @JsonIgnore
     private String password;
     
     

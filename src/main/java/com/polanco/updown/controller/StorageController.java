@@ -1,8 +1,12 @@
 package com.polanco.updown.controller;
 
 import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -25,6 +29,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
+import org.threeten.bp.LocalDateTime;
 
 import net.kaczmarzyk.spring.data.jpa.domain.Between;
 import net.kaczmarzyk.spring.data.jpa.domain.Equal;
@@ -50,17 +55,18 @@ public class StorageController {
 
 	@PostMapping("/upload")
 	@PreAuthorize("hasRole('MODERATOR') or hasRole('ADMIN')")
-	public ResponseEntity<MessageResponse> upload(@RequestParam(value = "file") MultipartFile[] files)
+	public ResponseEntity<MessageResponse> upload(@RequestParam(value = "files") MultipartFile[] files
+			, @RequestParam(value="expirationDate") String expirationDate)
 			throws IOException {
 		String message = "";
-
+		String expirationDateAux = expirationDate.split(",")[0];
 		try {
 			List<String> fileNames = new ArrayList<>();
 			Arrays.asList(files).stream().forEach(file -> {
-				storageService.save(file);
+				storageService.save(file, expirationDateAux);
 				fileNames.add(file.getOriginalFilename());
 			});
-
+			
 			message = "Archivo subido con exito: " + fileNames;
 			return ResponseEntity.status(HttpStatus.OK).body(new MessageResponse(message));
 		} catch (Exception e) {
@@ -69,6 +75,9 @@ public class StorageController {
 		}
 
 	}
+	
+	
+	
 
 	@GetMapping("/download/{fileName}")
 	@PreAuthorize("hasRole('USER') or hasRole('MODERATOR') or hasRole('ADMIN')")
@@ -105,6 +114,16 @@ public class StorageController {
 	    //return new ResponseEntity<>(response.getElements(), returnHttpHeaders(response), HttpStatus.OK);
 		return new ResponseEntity<>(response.getElements(), returnHttpHeaders(response), HttpStatus.OK);
 	}
+	
+	@PostMapping("/test")
+	@PreAuthorize("hasRole('USER') or hasRole('MODERATOR') or hasRole('ADMIN')")
+	public ResponseEntity<MessageResponse> testDate(@RequestParam("date") String date) {
+		
+		LocalDateTime dateRespose = LocalDateTime.parse(date+"T00:00:00");
+	    
+		return ResponseEntity.status(HttpStatus.OK).body(new MessageResponse("Esta es la fecha: "+ dateRespose));
+	}
+	
 	
 	private HttpHeaders returnHttpHeaders(PagingResponse response) {
         HttpHeaders headers = new HttpHeaders();

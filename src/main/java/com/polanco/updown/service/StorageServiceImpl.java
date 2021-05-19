@@ -5,6 +5,8 @@ import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
@@ -23,11 +25,13 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.util.FileSystemUtils;
 import org.springframework.web.multipart.MultipartFile;
+import org.threeten.bp.LocalDate;
 
 import com.polanco.updown.entity.FileInfo;
 import com.polanco.updown.entity.User;
 import com.polanco.updown.entity.util.PagingHeader;
 import com.polanco.updown.exception.ResourceNotFoundException;
+import com.polanco.updown.filter.UserSesion;
 import com.polanco.updown.payload.response.PagingResponse;
 import com.polanco.updown.repository.FileInfoRepository;
 import com.polanco.updown.repository.UserRepository;
@@ -46,7 +50,7 @@ public class StorageServiceImpl implements StorageService {
 	private FileInfoRepository fileInfoRepository;
 
 	@Autowired
-	UserRepository userRepository;
+	private UserRepository userRepository;
 
 	@Autowired
 	private UserDetailsServiceImpl userDetailsService;
@@ -63,28 +67,27 @@ public class StorageServiceImpl implements StorageService {
 	}
 
 	@Override
-	public void save(MultipartFile file) {
+	public void save(MultipartFile file, String expirationDate) {
 
 		FileInfo fileInfo = new FileInfo();
-		User user = new User();
-
-		Object auth = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-
-		if (auth instanceof UserDetails) {
-			String username = ((UserDetails) auth).getUsername();
-			user.setUsername(username);
-		}
+		String username = UserSesion.getCurrentUsername();
+		User user = userRepository.findByUsername(username).orElseThrow(
+				()-> new ResourceNotFoundException("Usuario no encontrado"));
 
 		Path path = root.resolve(file.getOriginalFilename());
 
+				
+		
 		try {
 			Files.copy(file.getInputStream(), this.root.resolve(file.getOriginalFilename()));
 
 			fileInfo.setName(file.getOriginalFilename());
 			fileInfo.setUrl(path.toString());
-			// fileInfo.setUser(user);
+			fileInfo.setUser(user);
+			fileInfo.setExpirationDate(LocalDateTime.parse(expirationDate+"T00:00:00"));
+			
 			fileInfoRepository.save(fileInfo);
-		} catch (IOException e) {
+		} catch (/*IOException*/ Exception e) {
 			throw new RuntimeException("No se pudo almacenar el archivo " + e.getMessage());
 		}
 
@@ -177,6 +180,13 @@ public class StorageServiceImpl implements StorageService {
 
 	public List<FileInfo> get(Specification<FileInfo> spec, Sort sort) {
 		return fileInfoRepository.findAll(spec, sort);
+	}
+
+	@Override
+	public LocalDateTime testDate(String date) {
+		//OffsetDateTime odt = OffsetDateTime.parse(expirationDate+"T00:00:00");
+		LocalDateTime aux = LocalDateTime.parse(date);	
+		return aux;
 	}
 
 }
